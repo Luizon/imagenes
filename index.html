@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Galería</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+
+            background: #111;
+            color: white;
+
+            font-family: Arial, sans-serif;
+        }
+
+        /* =========================================
+           VISTA DE CARPETAS
+           ========================================= */
+
+        #folderView {
+            width: min(1200px, 92vw);
+
+            margin: 0 auto;
+            padding: 50px 0;
+        }
+
+        #folderView h1 {
+            margin: 0 0 30px;
+
+            font-size: 32px;
+        }
+
+        .folders {
+            display: grid;
+
+            grid-template-columns:
+                repeat(auto-fill, minmax(220px, 1fr));
+
+            gap: 18px;
+        }
+
+        .folder {
+            background: #1b1b1b;
+
+            border: 1px solid #2b2b2b;
+            border-radius: 12px;
+
+            overflow: hidden;
+
+            cursor: pointer;
+
+            transition:
+                transform 0.15s ease,
+                background 0.15s ease,
+                border-color 0.15s ease;
+        }
+
+        .folder:hover {
+            background: #242424;
+
+            border-color: #444;
+
+            transform: translateY(-3px);
+        }
+
+        .folder-cover {
+            width: 100%;
+
+            aspect-ratio: 16 / 10;
+
+            background: #111;
+
+            overflow: hidden;
+        }
+
+        .folder-cover img {
+            width: 100%;
+            height: 100%;
+
+            display: block;
+
+            object-fit: cover;
+
+            transition:
+                transform 0.25s ease;
+        }
+
+        .folder:hover .folder-cover img {
+            transform: scale(1.04);
+        }
+
+        .folder-cover-empty {
+            width: 100%;
+            height: 100%;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            color: #666;
+
+            font-size: 14px;
+        }
+
+        .folder-name {
+            padding:
+                16px
+                16px
+                4px;
+
+            font-size: 19px;
+            font-weight: bold;
+
+            word-break: break-word;
+        }
+
+        .folder-count {
+            padding:
+                0
+                16px
+                16px;
+
+            color: #888;
+
+            font-size: 14px;
+        }
+
+        /* =========================================
+           VISTA DE GALERÍA
+           ========================================= */
+
+        #galleryView {
+            width: min(1400px, 95vw);
+
+            margin: 0 auto;
+
+            padding: 25px 0;
+
+            display: none;
+        }
+
+        .gallery-header {
+            display: flex;
+
+            align-items: center;
+
+            gap: 15px;
+
+            margin-bottom: 15px;
+        }
+
+        .back-button {
+            border: none;
+
+            background: #242424;
+            color: white;
+
+            padding: 10px 16px;
+
+            border-radius: 8px;
+
+            cursor: pointer;
+
+            font-size: 14px;
+        }
+
+        .back-button:hover {
+            background: #333;
+        }
+
+        .gallery-title {
+            margin: 0;
+
+            font-size: 24px;
+
+            word-break: break-word;
+        }
+
+        /* =========================================
+           VISOR
+           ========================================= */
+
+        .viewer {
+            position: relative;
+
+            width: 100%;
+
+            height: min(78vh, 800px);
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            background: #181818;
+
+            border-radius: 12px;
+
+            overflow: hidden;
+        }
+
+        .viewer img {
+            max-width: 100%;
+            max-height: 100%;
+
+            object-fit: contain;
+
+            user-select: none;
+
+            -webkit-user-drag: none;
+        }
+
+        .loading {
+            color: #888;
+        }
+
+        .error {
+            color: #ff6b6b;
+
+            text-align: center;
+
+            padding: 20px;
+        }
+
+        /* =========================================
+           BOTONES
+           ========================================= */
+
+        .button {
+            position: absolute;
+
+            top: 50%;
+
+            transform: translateY(-50%);
+
+            width: 52px;
+            height: 52px;
+
+            border: none;
+
+            border-radius: 50%;
+
+            background: rgba(0, 0, 0, 0.6);
+
+            color: white;
+
+            font-size: 30px;
+
+            cursor: pointer;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            transition:
+                background 0.15s ease;
+        }
+
+        .button:hover {
+            background: rgba(0, 0, 0, 0.85);
+        }
+
+        .prev {
+            left: 15px;
+        }
+
+        .next {
+            right: 15px;
+        }
+
+        /* =========================================
+           NOMBRE DE ARCHIVO
+           ========================================= */
+
+        .filename {
+            position: absolute;
+
+            left: 14px;
+            bottom: 14px;
+
+            max-width:
+                calc(100% - 28px);
+
+            padding: 7px 10px;
+
+            background:
+                rgba(0, 0, 0, 0.7);
+
+            color: white;
+
+            border-radius: 6px;
+
+            font-size: 13px;
+
+            line-height: 1.2;
+
+            white-space: nowrap;
+
+            overflow: hidden;
+
+            text-overflow: ellipsis;
+
+            pointer-events: none;
+        }
+
+        /* =========================================
+           CONTADOR
+           ========================================= */
+
+        .info {
+            text-align: center;
+
+            margin-top: 12px;
+
+            color: #888;
+
+            font-size: 14px;
+        }
+
+        /* =========================================
+           MÓVIL
+           ========================================= */
+
+        @media (max-width: 600px) {
+
+            #folderView {
+                padding: 30px 0;
+            }
+
+            #folderView h1 {
+                font-size: 26px;
+            }
+
+            .folders {
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr));
+
+                gap: 12px;
+            }
+
+            .folder-name {
+                font-size: 16px;
+            }
+
+            .viewer {
+                height: 70vh;
+            }
+
+            .button {
+                width: 44px;
+                height: 44px;
+
+                font-size: 26px;
+            }
+
+            .prev {
+                left: 8px;
+            }
+
+            .next {
+                right: 8px;
+            }
+
+            .filename {
+                font-size: 12px;
+
+                left: 8px;
+                bottom: 8px;
+
+                max-width:
+                    calc(100% - 16px);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- =========================================
+         MENÚ DE CARPETAS
+         ========================================= -->
+
+    <section id="folderView">
+
+        <h1>Galería</h1>
+
+        <div
+            id="folders"
+            class="folders"
+        ></div>
+
+    </section>
+
+
+    <!-- =========================================
+         GALERÍA
+         ========================================= -->
+
+    <section id="galleryView">
+
+        <div class="gallery-header">
+
+            <button
+                id="backButton"
+                class="back-button"
+            >
+                ← Volver
+            </button>
+
+            <h2
+                id="galleryTitle"
+                class="gallery-title"
+            ></h2>
+
+        </div>
+
+
+        <div class="viewer">
+
+            <div
+                id="loading"
+                class="loading"
+            >
+                Cargando...
+            </div>
+
+
+            <div
+                id="error"
+                class="error"
+                style="display: none;"
+            ></div>
+
+
+            <img
+                id="image"
+                style="display: none;"
+                alt=""
+            />
+
+
+            <div
+                id="filename"
+                class="filename"
+            ></div>
+
+
+            <button
+                id="prev"
+                class="button prev"
+                aria-label="Imagen anterior"
+            >
+                ‹
+            </button>
+
+
+            <button
+                id="next"
+                class="button next"
+                aria-label="Siguiente imagen"
+            >
+                ›
+            </button>
+
+        </div>
+
+
+        <div
+            id="info"
+            class="info"
+        >
+            0 / 0
+        </div>
+
+    </section>
+
+
+    <script>
+
+        /* =========================================
+           CONFIGURACIÓN
+           ========================================= */
+
+        const R2_BASE_URL =
+            "https://img.luizon.com";
+
+
+        /* =========================================
+           ESTADO
+           ========================================= */
+
+        let folders = {};
+
+        let currentFolder = null;
+
+        let currentImages = [];
+
+        let currentIndex = 0;
+
+
+        /* =========================================
+           ELEMENTOS
+           ========================================= */
+
+        const folderView =
+            document.getElementById(
+                "folderView"
+            );
+
+        const galleryView =
+            document.getElementById(
+                "galleryView"
+            );
+
+        const foldersContainer =
+            document.getElementById(
+                "folders"
+            );
+
+        const galleryTitle =
+            document.getElementById(
+                "galleryTitle"
+            );
+
+        const imageElement =
+            document.getElementById(
+                "image"
+            );
+
+        const loadingElement =
+            document.getElementById(
+                "loading"
+            );
+
+        const errorElement =
+            document.getElementById(
+                "error"
+            );
+
+        const infoElement =
+            document.getElementById(
+                "info"
+            );
+
+        const filenameElement =
+            document.getElementById(
+                "filename"
+            );
+
+
+        /* =========================================
+           CARGAR JSON
+           ========================================= */
+
+        async function loadImages() {
+
+            try {
+
+                const response =
+                    await fetch(
+                        "./images.json"
+                    );
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        `Error ${response.status} al cargar images.json`
+                    );
+
+                }
+
+
+                folders =
+                    await response.json();
+
+
+                renderFolders();
+
+            }
+            catch (error) {
+
+                console.error(error);
+
+
+                folderView.style.display =
+                    "block";
+
+
+                foldersContainer.innerHTML = `
+                    <div class="error">
+                        No se pudo cargar images.json
+                    </div>
+                `;
+            }
+        }
+
+
+        /* =========================================
+           MOSTRAR CARPETAS
+           ========================================= */
+
+        function renderFolders() {
+
+            folderView.style.display =
+                "block";
+
+            galleryView.style.display =
+                "none";
+
+
+            foldersContainer.innerHTML =
+                "";
+
+
+            const folderNames =
+                Object.keys(folders);
+
+
+            if (
+                folderNames.length === 0
+            ) {
+
+                foldersContainer.innerHTML = `
+                    <div class="error">
+                        No hay carpetas disponibles.
+                    </div>
+                `;
+
+                return;
+            }
+
+
+            for (
+                const folderName
+                of folderNames
+            ) {
+
+                const images =
+                    folders[
+                        folderName
+                    ];
+
+
+                const folderElement =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                folderElement.className =
+                    "folder";
+
+
+                const coverUrl =
+                    images.length > 0
+                        ? buildImageUrl(
+                            folderName,
+                            images[0]
+                        )
+                        : null;
+
+
+                folderElement.innerHTML = `
+                    <div class="folder-cover">
+
+                        ${
+                            coverUrl
+                                ? `
+                                    <img
+                                        src="${coverUrl}"
+                                        alt=""
+                                        loading="lazy"
+                                    >
+                                `
+                                : `
+                                    <div class="folder-cover-empty">
+                                        Sin imágenes
+                                    </div>
+                                `
+                        }
+
+                    </div>
+
+
+                    <div class="folder-name">
+                        ${escapeHtml(folderName)}
+                    </div>
+
+
+                    <div class="folder-count">
+
+                        ${images.length}
+
+                        ${
+                            images.length === 1
+                                ? "imagen"
+                                : "imágenes"
+                        }
+
+                    </div>
+                `;
+
+
+                folderElement.addEventListener(
+                    "click",
+                    () =>
+                        openFolder(
+                            folderName
+                        )
+                );
+
+
+                foldersContainer.appendChild(
+                    folderElement
+                );
+            }
+        }
+
+
+        /* =========================================
+           ABRIR CARPETA
+           ========================================= */
+
+        function openFolder(
+            folderName
+        ) {
+
+            currentFolder =
+                folderName;
+
+
+            currentImages =
+                folders[
+                    folderName
+                ] || [];
+
+
+            currentIndex = 0;
+
+
+            folderView.style.display =
+                "none";
+
+
+            galleryView.style.display =
+                "block";
+
+
+            galleryTitle.textContent =
+                folderName;
+
+
+            showImage(0);
+        }
+
+
+        /* =========================================
+           CREAR URL DE R2
+           ========================================= */
+
+        function buildImageUrl(
+            folder,
+            filename
+        ) {
+
+            const encodedFolder =
+                encodeURIComponent(
+                    folder
+                );
+
+
+            const encodedFilename =
+                encodeURIComponent(
+                    filename
+                );
+
+
+            return (
+                `${R2_BASE_URL}/` +
+                `${encodedFolder}/` +
+                `${encodedFilename}`
+            );
+        }
+
+
+        /* =========================================
+           MOSTRAR IMAGEN
+           ========================================= */
+
+        function showImage(index) {
+
+            if (
+                currentImages.length === 0
+            ) {
+
+                showError(
+                    "Esta carpeta no contiene imágenes."
+                );
+
+                return;
+            }
+
+
+            /* Circular */
+
+            if (index < 0) {
+
+                index =
+                    currentImages.length - 1;
+            }
+
+
+            if (
+                index >=
+                currentImages.length
+            ) {
+
+                index = 0;
+            }
+
+
+            currentIndex =
+                index;
+
+
+            const filename =
+                currentImages[
+                    currentIndex
+                ];
+
+
+            const url =
+                buildImageUrl(
+                    currentFolder,
+                    filename
+                );
+
+
+            /* Estado de carga */
+
+            loadingElement.style.display =
+                "block";
+
+
+            errorElement.style.display =
+                "none";
+
+
+            imageElement.style.display =
+                "none";
+
+
+            /* Nombre */
+
+            filenameElement.textContent =
+                filename;
+
+
+            /* Cargar imagen */
+
+            imageElement.onload =
+                () => {
+
+                    loadingElement
+                        .style
+                        .display =
+                        "none";
+
+
+                    imageElement
+                        .style
+                        .display =
+                        "block";
+                };
+
+
+            imageElement.onerror =
+                () => {
+
+                    loadingElement
+                        .style
+                        .display =
+                        "none";
+
+
+                    showError(
+                        `No se pudo cargar: ${filename}`
+                    );
+                };
+
+
+            imageElement.src =
+                url;
+
+
+            /* Contador */
+
+            infoElement.textContent =
+                `${currentIndex + 1} / ${currentImages.length}`;
+        }
+
+
+        /* =========================================
+           ERROR
+           ========================================= */
+
+        function showError(
+            message
+        ) {
+
+            errorElement.textContent =
+                message;
+
+
+            errorElement.style.display =
+                "block";
+        }
+
+
+        /* =========================================
+           SIGUIENTE
+           ========================================= */
+
+        function nextImage() {
+
+            showImage(
+                currentIndex + 1
+            );
+        }
+
+
+        /* =========================================
+           ANTERIOR
+           ========================================= */
+
+        function previousImage() {
+
+            showImage(
+                currentIndex - 1
+            );
+        }
+
+
+        /* =========================================
+           VOLVER
+           ========================================= */
+
+        document
+            .getElementById(
+                "backButton"
+            )
+            .addEventListener(
+                "click",
+                renderFolders
+            );
+
+
+        /* =========================================
+           BOTONES
+           ========================================= */
+
+        document
+            .getElementById(
+                "next"
+            )
+            .addEventListener(
+                "click",
+                nextImage
+            );
+
+
+        document
+            .getElementById(
+                "prev"
+            )
+            .addEventListener(
+                "click",
+                previousImage
+            );
+
+
+        /* =========================================
+           TECLADO
+           ========================================= */
+
+        document.addEventListener(
+            "keydown",
+            event => {
+
+                if (
+                    galleryView.style.display !==
+                    "block"
+                ) {
+                    return;
+                }
+
+
+                if (
+                    event.key ===
+                    "ArrowRight"
+                ) {
+
+                    nextImage();
+                }
+
+
+                if (
+                    event.key ===
+                    "ArrowLeft"
+                ) {
+
+                    previousImage();
+                }
+
+
+                if (
+                    event.key ===
+                    "Escape"
+                ) {
+
+                    renderFolders();
+                }
+            }
+        );
+
+
+        /* =========================================
+           SWIPE MÓVIL
+           ========================================= */
+
+        let touchStartX = 0;
+
+
+        imageElement.addEventListener(
+            "touchstart",
+            event => {
+
+                touchStartX =
+                    event.touches[0]
+                        .clientX;
+            }
+        );
+
+
+        imageElement.addEventListener(
+            "touchend",
+            event => {
+
+                const touchEndX =
+                    event.changedTouches[0]
+                        .clientX;
+
+
+                const difference =
+                    touchStartX -
+                    touchEndX;
+
+
+                const minimumDistance =
+                    50;
+
+
+                if (
+                    Math.abs(
+                        difference
+                    ) <
+                    minimumDistance
+                ) {
+
+                    return;
+                }
+
+
+                if (
+                    difference > 0
+                ) {
+
+                    nextImage();
+
+                }
+                else {
+
+                    previousImage();
+                }
+            }
+        );
+
+
+        /* =========================================
+           ESCAPAR HTML
+           ========================================= */
+
+        function escapeHtml(
+            text
+        ) {
+
+            return text
+                .replaceAll(
+                    "&",
+                    "&amp;"
+                )
+                .replaceAll(
+                    "<",
+                    "&lt;"
+                )
+                .replaceAll(
+                    ">",
+                    "&gt;"
+                )
+                .replaceAll(
+                    '"',
+                    "&quot;"
+                )
+                .replaceAll(
+                    "'",
+                    "&#039;"
+                );
+        }
+
+
+        /* =========================================
+           INICIAR
+           ========================================= */
+
+        loadImages();
+
+    </script>
+
+</body>
+
+</html>
